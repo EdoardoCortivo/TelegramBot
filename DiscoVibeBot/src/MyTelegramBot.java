@@ -17,23 +17,24 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         // We check if the update has a message and the message has text
         if (update.hasMessage() && update.getMessage().hasText()) {
             // Set variables
+            String Risposta = "";
             String message_text = update.getMessage().getText();
             long chat_id = update.getMessage().getChatId();
             String[] messaggio = message_text.split(" ");
-            String Risposta = "";
+            String[] Album = message_text.replace(messaggio[0], "").split(",");
             switch (messaggio[0])
             {
                 case "/start":
                     Risposta = Start();
                     break;
                 case "/search":
-                    Risposta = Search(messaggio[1],messaggio[2]);
+                    Risposta = Search(Album[0].trim(),Album[1].trim());
                     break;
                 case "/save":
                     Risposta = Save();
                     break;
                 case "/history":
-                    Risposta = History(messaggio[1],messaggio[2]);
+                    Risposta = History(Album[0].trim());
                     break;
                 case "/all":
                     Risposta = All();
@@ -68,11 +69,11 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         String Risposta = "Ciao, sono DiscoVibesBot! Trova e risparmia sui dischi in vinile e CD. Cosa stai cercando oggi?";
         return Risposta;
     }
-    public String Search()
+    public String Search(String titolo, String artista)
     {
         String Risposta = "Ecco cosa ho trovato:\n" +
-                "- Titolo\n" +
-                "- Artista\n" +
+                "- " + titolo + "\n" +
+                "- " + artista + "\n" +
                 "- Formato\n" +
                 "- Prezzo";
         return Risposta;
@@ -82,9 +83,9 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         String Risposta = "Album aggiunto correttamente al database \uD83D\uDE01";
         return Risposta;
     }
-    public String History()
+    public String History(String titolo)
     {
-        String Risposta = "L'album 'Titolo' ha avuto il minimo in 'data' a 'prezzo' e il 'massimo' in 'data' a 'prezzo'";
+        String Risposta = "L'album " + titolo + " ha avuto il minimo in 'data' a 'prezzo' e il 'massimo' in 'data' a 'prezzo'";
         return Risposta;
     }
     public String All()
