@@ -1,9 +1,17 @@
 import org.telegram.telegrambots.client.okhttp.OkHttpTelegramClient;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
+import java.util.List;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
+import static java.lang.Math.toIntExact;
 
 public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
     private final TelegramClient telegramClient;
@@ -28,7 +36,7 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
                     Risposta = Start();
                     break;
                 case "/search":
-                    Risposta = Search(Album[0].trim(),Album[1].trim());
+                    Search(Album[0].trim(),Album[1].trim(), chat_id);
                     break;
                 case "/save":
                     Risposta = Save();
@@ -49,17 +57,24 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
                     Risposta = Default();
                     break;
             }
+        }
+        else if (update.hasCallbackQuery()) {
+            // Set variables
+            String call_data = update.getCallbackQuery().getData();
+            long message_id = update.getCallbackQuery().getMessage().getMessageId();
+            long chat_id = update.getCallbackQuery().getMessage().getChatId();
 
-
-            SendMessage message = SendMessage // Create a message object
-                    .builder()
-                    .chatId(chat_id)
-                    .text(Risposta)
-                    .build();
-            try {
-                telegramClient.execute(message); // Sending our message object to user
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
+            if (call_data.equals("update_msg_text")) {
+                String answer = "OK Attiveremo le notifiche per questo prodotto";
+                SendMessage new_message = SendMessage.builder()
+                        .chatId(chat_id)
+                        .text(answer)
+                        .build();
+                try {
+                    telegramClient.execute(new_message);
+                } catch (TelegramApiException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -69,14 +84,40 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         String Risposta = "Ciao, sono DiscoVibesBot! Trova e risparmia sui dischi in vinile e CD. Cosa stai cercando oggi?";
         return Risposta;
     }
-    public String Search(String titolo, String artista)
+    public void Search(String titolo, String artista, long chat_id)
     {
-        String Risposta = "Ecco cosa ho trovato:\n" +
-                "- " + titolo + "\n" +
-                "- " + artista + "\n" +
-                "- Formato\n" +
-                "- Prezzo";
-        return Risposta;
+
+        List<Album> albums = ScraperMondadori.ScraperM(titolo, artista);
+        for (Album album : albums) {
+            String Risposta = album.toString();
+            SendPhoto msg = SendPhoto.builder().chatId(chat_id).photo(new InputFile(album.getImmagine())).caption("").build();
+            try {
+                telegramClient.execute(msg); // Call method to send the message
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
+            SendMessage message = SendMessage // Create a message object
+                    .builder()
+                    .chatId(chat_id)
+                    .text(Risposta)
+                    .replyMarkup(InlineKeyboardMarkup
+                            .builder()
+                            .keyboardRow(
+                                    new InlineKeyboardRow(InlineKeyboardButton
+                                            .builder()
+                                            .text("Voglio seguire questo!")
+                                            .callbackData("update_msg_text")
+                                            .build()
+                                    )
+                            )
+                            .build())
+                    .build();
+            try {
+                telegramClient.execute(message); // Sending our message object to user
+            } catch (TelegramApiException e) {
+                e.printStackTrace();
+            }
+        }
     }
     public String Save()
     {
