@@ -10,22 +10,22 @@ import java.util.List;
 public class ScraperMondadori {
     public static List<Album> ScraperM(String Nome, String Autore) {
         ChromeOptions options = new ChromeOptions();
-        /*options.addArguments("--headless"); // Modalità senza interfaccia grafica
+        options.addArguments("--headless"); // Modalità senza interfaccia grafica
         options.addArguments("--disable-gpu"); // Necessario su alcune piattaforme
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--window-size=1920,1080");*/
+        options.addArguments("--window-size=1920,1080");
         WebDriver driver = new ChromeDriver();
         List<Album> albums = new ArrayList<>();
 
         try {
             driver.get("https://www.mondadoristore.it");
 
-            try {
+            /*try {
                 Thread.sleep(10000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
-            }
+            }*/
 
             WebElement searchInput = driver.findElement(By.id("search-input"));
             searchInput.sendKeys(Autore + " " + Nome);
@@ -71,7 +71,9 @@ public class ScraperMondadori {
                 if(titolo.toLowerCase().contains(Nome.toLowerCase())) {
                     Album album = new Album(prezzo1, artista, titolo, formato1, Image, "Mondadori");
                     albums.add(album);
+
                 }
+                System.out.println(titolo.toLowerCase());
             }
 
         } catch (Exception e) {
