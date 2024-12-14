@@ -4,23 +4,28 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class ScraperMondadori {
     public static List<Album> ScraperM(String Nome, String Autore) {
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless"); // Modalità senza interfaccia grafica
+        /*options.addArguments("--headless"); // Modalità senza interfaccia grafica
         options.addArguments("--disable-gpu"); // Necessario su alcune piattaforme
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("--window-size=1920,1080");
+        options.addArguments("--window-size=1920,1080");*/
         WebDriver driver = new ChromeDriver();
         List<Album> albums = new ArrayList<>();
 
         try {
             driver.get("https://www.mondadoristore.it");
+
+            try {
+                Thread.sleep(10000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
             WebElement searchInput = driver.findElement(By.id("search-input"));
             searchInput.sendKeys(Autore + " " + Nome);
@@ -58,11 +63,15 @@ public class ScraperMondadori {
                 }
                 if(formato2 != "")
                 {
-                    Album album = new Album(prezzo2, artista, titolo, formato2, Image);
+                    if(titolo.toLowerCase().contains(Nome.toLowerCase())) {
+                        Album album = new Album(prezzo2, artista, titolo, formato2, Image);
+                        albums.add(album);
+                    }
+                }
+                if(titolo.toLowerCase().contains(Nome.toLowerCase())) {
+                    Album album = new Album(prezzo1, artista, titolo, formato1, Image);
                     albums.add(album);
                 }
-                Album album = new Album(prezzo1, artista, titolo, formato1, Image);
-                albums.add(album);
             }
 
         } catch (Exception e) {

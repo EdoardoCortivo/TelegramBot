@@ -88,6 +88,7 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
     {
 
         List<Album> albums = ScraperMondadori.ScraperM(titolo, artista);
+        albums.addAll(ScraperFeltrinelli.ScraperF(titolo, artista));
         for (Album album : albums) {
             String Risposta = album.toString();
             SendPhoto msg = SendPhoto.builder().chatId(chat_id).photo(new InputFile(album.getImmagine())).caption("").build();
