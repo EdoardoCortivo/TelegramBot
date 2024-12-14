@@ -14,6 +14,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import static java.lang.Math.toIntExact;
 
 public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
+    Boolean Notiiche = true;
+
+
     private final TelegramClient telegramClient;
 
     public MyTelegramBot(String botToken) {
@@ -33,28 +36,25 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
             switch (messaggio[0])
             {
                 case "/start":
-                    Risposta = Start();
+                    Start();
                     break;
                 case "/search":
                     Search(Album[0].trim(),Album[1].trim(), chat_id);
                     break;
-                case "/save":
-                    Risposta = Save();
-                    break;
                 case "/history":
-                    Risposta = History(Album[0].trim());
+                    History(Album[0].trim());
                     break;
                 case "/all":
-                    Risposta = All();
+                    All();
                     break;
                 case "/notify":
-                    Risposta = Notify();
+                    Notify();
                     break;
                 case "/help":
-                    Risposta = Help();
+                    Help();
                     break;
                 default:
-                    Risposta = Default();
+                    Default();
                     break;
             }
         }
@@ -79,72 +79,43 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         }
     }
 
-    public String Start()
+    public void Start()
     {
         String Risposta = "Ciao, sono DiscoVibesBot! Trova e risparmia sui dischi in vinile e CD. Cosa stai cercando oggi?";
-        return Risposta;
+
     }
     public void Search(String titolo, String artista, long chat_id)
     {
-
-        List<Album> albums = ScraperMondadori.ScraperM(titolo, artista);
+        List<Album> albums = new java.util.ArrayList<>(List.of());
+        albums.addAll(ScraperMondadori.ScraperM(titolo, artista));
         albums.addAll(ScraperFeltrinelli.ScraperF(titolo, artista));
         for (Album album : albums) {
             String Risposta = album.toString();
-            SendPhoto msg = SendPhoto.builder().chatId(chat_id).photo(new InputFile(album.getImmagine())).caption("").build();
-            try {
-                telegramClient.execute(msg); // Call method to send the message
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
-            SendMessage message = SendMessage // Create a message object
-                    .builder()
-                    .chatId(chat_id)
-                    .text(Risposta)
-                    .replyMarkup(InlineKeyboardMarkup
-                            .builder()
-                            .keyboardRow(
-                                    new InlineKeyboardRow(InlineKeyboardButton
-                                            .builder()
-                                            .text("Voglio seguire questo!")
-                                            .callbackData("update_msg_text")
-                                            .build()
-                                    )
-                            )
-                            .build())
-                    .build();
-            try {
-                telegramClient.execute(message); // Sending our message object to user
-            } catch (TelegramApiException e) {
-                e.printStackTrace();
-            }
+            Sendphoto(album.getImmagine(), chat_id);
+            SendSearchResult(Risposta, chat_id);
         }
     }
-    public String Save()
+    public void Save()
     {
         String Risposta = "Album aggiunto correttamente al database \uD83D\uDE01";
-        return Risposta;
     }
-    public String History(String titolo)
+    public void History(String titolo)
     {
         String Risposta = "L'album " + titolo + " ha avuto il minimo in 'data' a 'prezzo' e il 'massimo' in 'data' a 'prezzo'";
-        return Risposta;
     }
-    public String All()
+    public void All()
     {
         String  Risposta = "Ecco tutti gli Album che hai salvato:\n" +
                 "- Titolo Artista\n" +
                 "- Titolo Artista\n" +
                 "- Titolo Artista\n" +
                 "- Titolo Artista";
-        return Risposta;
     }
-    public String Notify()
+    public void Notify()
     {
         String Risposta = "OK! Disattivo le notifiche";
-        return Risposta;
     }
-    public String Help()
+    public void Help()
     {
         String Risposta = "Ecco la lista dei comandi:\n" +
                 "/start: Avvia la conversazione con il bot e fornisce una breve introduzione su come utilizzare le funzionalità principali.\n" +
@@ -154,11 +125,44 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
                 "/all: Mostra una lista di tutti gli album che l'utente ha salvato nel database, consentendo di visualizzare rapidamente gli album monitorati e i loro prezzi attuali.\n" +
                 "/notify: Abilita o disabilita le notifiche riguardo alle variazioni di prezzo per gli album salvati.\n" +
                 "/help: Fornisce informazioni dettagliate sui comandi disponibili e su come utilizzarli correttamente.";
-        return Risposta;
     }
-    public String Default()
+    public void Default()
     {
         String Risposta = "Questo si che è imbarazzante ... \nNon capisco quello che dici.\uD83D\uDE05";
-        return Risposta;
+    }
+
+    public void SendSearchResult(String Risposta, long chat_id)
+    {
+        SendMessage message = SendMessage // Create a message object
+                .builder()
+                .chatId(chat_id)
+                .text(Risposta)
+                .replyMarkup(InlineKeyboardMarkup
+                        .builder()
+                        .keyboardRow(
+                                new InlineKeyboardRow(InlineKeyboardButton
+                                        .builder()
+                                        .text("Voglio seguire questo!")
+                                        .callbackData("update_msg_text")
+                                        .build()
+                                )
+                        )
+                        .build())
+                .build();
+        try {
+            telegramClient.execute(message); // Sending our message object to user
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void Sendphoto(String image, long chat_id)
+    {
+        SendPhoto msg = SendPhoto.builder().chatId(chat_id).photo(new InputFile(image)).caption("").build();
+        try {
+            telegramClient.execute(msg); // Call method to send the message
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
     }
 }

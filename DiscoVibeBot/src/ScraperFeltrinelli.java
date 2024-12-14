@@ -53,8 +53,8 @@ public class ScraperFeltrinelli {
                 if(lines.length >= 4) formato = lines[3].split(" | ")[0];
                 if(lines[5].contains("€")) prezzo = lines[5];
                 if(lines[6].contains("€")) prezzo = lines[6];
-                if(titolo.toLowerCase().contains(Nome.toLowerCase())) {
-                    Album album = new Album(prezzo, artista, titolo, formato, Image);
+                if(titolo.toLowerCase().contains(Nome.toLowerCase())&& (formato.contains("Vinili")|| formato.contains("Cd"))) {
+                    Album album = new Album(prezzo, artista, titolo, formato, Image, "Feltrinelli");
                     albums.add(album);
                 }
             }

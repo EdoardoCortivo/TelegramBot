@@ -4,13 +4,15 @@ public class Album {
     private String formato;
     private String prezzo;
     private String Immagine;
+    private String Venditore;
 
-    public Album(String prezzo, String autore, String titolo, String formato, String Immagine) {
+    public Album(String prezzo, String autore, String titolo, String formato, String Immagine, String Venditore) {
         this.prezzo = prezzo;
         this.autore = autore;
         this.titolo = titolo;
         this.formato = formato;
         this.Immagine = Immagine;
+        this.Venditore = Venditore;
     }
 
     public String getImmagine() {
@@ -23,11 +25,10 @@ public class Album {
 
     @Override
     public String toString() {
-        return "Ecco cosa ho trovato: \n" +
+        return "Fornitore " + Venditore + ": \n" +
                 "🎵 Album: " + titolo + "\n" +
                 "🧑‍🎤 Artista: " + autore + "\n" +
                 "💿 Formato: " + formato + "\n" +
                 "💰 Prezzo: " + prezzo + "\n";
-
     }
 }
