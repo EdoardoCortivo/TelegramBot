@@ -15,6 +15,46 @@ public class Album {
         this.Venditore = Venditore;
     }
 
+    public String getAutore() {
+        return autore;
+    }
+
+    public void setAutore(String autore) {
+        this.autore = autore;
+    }
+
+    public String getVenditore() {
+        return Venditore;
+    }
+
+    public void setVenditore(String venditore) {
+        Venditore = venditore;
+    }
+
+    public String getPrezzo() {
+        return prezzo;
+    }
+
+    public void setPrezzo(String prezzo) {
+        this.prezzo = prezzo;
+    }
+
+    public String getFormato() {
+        return formato;
+    }
+
+    public void setFormato(String formato) {
+        this.formato = formato;
+    }
+
+    public String getTitolo() {
+        return titolo;
+    }
+
+    public void setTitolo(String titolo) {
+        this.titolo = titolo;
+    }
+
     public String getImmagine() {
         return Immagine;
     }
