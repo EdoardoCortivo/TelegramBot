@@ -3,21 +3,8 @@ import java.time.LocalDateTime;
 
 public class AlbumDB {
 
-    /**
-     * Represents a connection to a database.
-     *
-     * The conn variable is used to establish a connection to a database and execute SQL queries.
-     *
-     * Methods in the DB class utilize the conn variable to execute queries such as SELECT, INSERT, UPDATE, and DELETE.
-     *
-     * This variable should be initialized with a valid Connection object before using any of the database-related methods.
-     */
     private Connection conn;
 
-
-    /**
-     * Represents a connection to a database.
-     */
     public AlbumDB(String address, String port, String databaseName, String username, String password) {
         // Costruzione della stringa di connessione
         String dbConnectionString = "jdbc:mysql://" + address + ":" + port;
@@ -77,16 +64,7 @@ public class AlbumDB {
     }
 
 //---------------------------------------------------------------------------------------------------------------------------
-    /**
-     * Executes a SELECT query on the database.
-     *
-     * @param what   the column(s) to select
-     * @param from   the table(s) to select from
-     * @param where  the condition to filter the result
-     * @param is     the value to compare in the WHERE clause
-     * @return a string representation of the selected data, formatted as tab-separated values
-     * @throws SQLException if an SQL exception occurs while executing the query
-     */
+
     public String select(String what, String from, String where, String where2 ,String is, String is2) {
         String result = "";
         try {
@@ -118,13 +96,6 @@ public class AlbumDB {
         return result;
     }
 
-    /**
-     * Executes a SELECT query on the database to retrieve all records from a specified table.
-     *
-     * @param from the name of the table to select from
-     * @return a string representation of the selected data, formatted as tab-separated values
-     * @throws SQLException if an SQL exception occurs while executing the query
-     */
     public String selectALL(String from) {
         String result = "";
         try {
