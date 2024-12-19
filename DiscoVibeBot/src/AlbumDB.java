@@ -5,7 +5,7 @@ public class AlbumDB {
 
     private Connection conn;
 
-    public AlbumDB(String address, String port, String databaseName, String username, String password) {
+    public AlbumDB(String address, String port, String username, String password) {
         // Costruzione della stringa di connessione
         String dbConnectionString = "jdbc:mysql://" + address + ":" + port;
 

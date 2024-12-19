@@ -1,11 +1,11 @@
 import java.sql.*;
 import java.time.LocalDateTime;
 
-public class UtenteDB {
+public class salvaDB {
 
     private Connection conn;
 
-    public UtenteDB(String address, String port, String username, String password) {
+    public salvaDB(String address, String port, String username, String password) {
         // Costruzione della stringa di connessione
         String dbConnectionString = "jdbc:mysql://" + address + ":" + port;
 
@@ -35,17 +35,22 @@ public class UtenteDB {
     }
 
     private void createTableIfNotExists() {
-        String createTableSQL = "CREATE TABLE IF NOT EXISTS Utenti (" +
-                "id BIGINT NOT NULL PRIMARY KEY);";
-        ;
+        String createTableSQL = "CREATE TABLE IF NOT EXISTS Salva (" +
+                "Id_Utente BIGINT NOT NULL, " +
+                "Id_Album INT NOT NULL, " +
+                "PRIMARY KEY (Id_Utente, Id_Album), " +
+                "FOREIGN KEY (Id_Utente) REFERENCES Utente(Id), " +
+                "FOREIGN KEY (Id_Album) REFERENCES Albums(Id)" +
+                ");";
 
         try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate(createTableSQL);
-            System.out.println("Tabella 'Utenti' creata o già esistente.");
+            System.out.println("Tabella 'Salva' creata o già esistente.");
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
+
 
     private boolean databaseExists(String databaseName) {
         try (Statement stmt = conn.createStatement()) {
@@ -118,7 +123,7 @@ public class UtenteDB {
 
         return result;
     }
-//------------------------------------------------------------------------------------------------------------------------------------------------------------------\\
+    //------------------------------------------------------------------------------------------------------------------------------------------------------------------\\
     public boolean insertUser(long chat_id) {
         try {
             if (!conn.isValid(5)) {
