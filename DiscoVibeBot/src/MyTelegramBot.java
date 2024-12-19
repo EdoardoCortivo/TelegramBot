@@ -73,6 +73,7 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
 
     public void Start(long chat_id) {
         String Risposta = "Ciao, sono DiscoVibesBot! Trova e risparmia sui dischi in vinile e CD. Cosa stai cercando oggi?";
+
         SendMsg(Risposta, chat_id);
     }
 
