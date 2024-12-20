@@ -37,10 +37,11 @@ public class salvaDB {
     private void createTableIfNotExists() {
         String createTableSQL = "CREATE TABLE IF NOT EXISTS Salva (" +
                 "Id_Utente BIGINT NOT NULL, " +
-                "Id_Album INT NOT NULL, " +
-                "PRIMARY KEY (Id_Utente, Id_Album), " +
-                "FOREIGN KEY (Id_Utente) REFERENCES Utente(Id), " +
-                "FOREIGN KEY (Id_Album) REFERENCES Albums(Id)" +
+                "nome_artista VARCHAR(255) NOT NULL, " +
+                "nome_album VARCHAR(255) NOT NULL, " +
+                "PRIMARY KEY (Id_Utente, nome_artista, nome_album), " +
+                "FOREIGN KEY (Id_Utente) REFERENCES Utenti(id), " +
+                "FOREIGN KEY (nome_artista, nome_album) REFERENCES Albums(nome_artista, nome_album)" +
                 ");";
 
         try (Statement stmt = conn.createStatement()) {
@@ -64,7 +65,7 @@ public class salvaDB {
 
 //---------------------------------------------------------------------------------------------------------------------------
 
-    public String select(String what, String from, String where, String is) {
+    public String select(String what, String what2, String from, String where,long is) {
         String result = "";
         try {
             if (!conn.isValid(5)) {
@@ -74,11 +75,11 @@ public class salvaDB {
             e.printStackTrace();
             return null;
         }
-        String query = "SELECT " + what + " FROM " + from + " WHERE " + where + " = ?";
+        String query = "SELECT " + what + " AND " + what2 + " FROM " + from + " WHERE " + where + " = ?";
 
         try {
             PreparedStatement statement = conn.prepareStatement(query);
-            statement.setString(1, is);
+            statement.setLong(1, is);
             ResultSet rs = statement.executeQuery();
             while (rs.next()) {
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
@@ -94,7 +95,7 @@ public class salvaDB {
         return result;
     }
 
-    public String selectALL(String from) {
+    public String selectALL(String from, String where, long is) {
         String result = "";
         try {
             if (!conn.isValid(5)) {
@@ -103,18 +104,19 @@ public class salvaDB {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        String query = "SELECT * FROM " + from;
+        String query = "SELECT nome_artista, nome_album FROM " + from + " WHERE " + where + " = ?";
 
         try {
             PreparedStatement statement = conn.prepareStatement(query);
+            statement.setLong(1, is);
             ResultSet rs = statement.executeQuery();
             while (rs.next()) {
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-                    result += rs.getString(i) + "\t";
+                    result += rs.getString(i) + "\n";
                     //if the record is too short this if add a new tabulation
-                    if (rs.getString(i).length() < 8) result += "\t";
+                    if (rs.getString(i).length() < 8) result += "\n";
                 }
-                result += "\n";
+                result += "69104";
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -124,7 +126,7 @@ public class salvaDB {
         return result;
     }
     //------------------------------------------------------------------------------------------------------------------------------------------------------------------\\
-    public boolean insertUser(long chat_id) {
+    public boolean insertSave(long chat_id, Album album) {
         try {
             if (!conn.isValid(5)) {
                 return false;
@@ -133,10 +135,12 @@ public class salvaDB {
             e.printStackTrace();
             return false;
         }
-        String query = "INSERT INTO User (chat_id) VALUES (?)";
+        String query = "INSERT INTO Salva (Id_Utente, nome_artista, nome_album) VALUES (?, ?, ?)";
         try {
             PreparedStatement statement = conn.prepareStatement(query);
             statement.setLong(1, chat_id);
+            statement.setString(2, album.getAutore());
+            statement.setString(3, album.getTitolo());
             statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();

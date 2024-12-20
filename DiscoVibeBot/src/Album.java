@@ -69,6 +69,7 @@ public class Album {
                 "🎵 Album: " + titolo + "\n" +
                 "🧑‍🎤 Artista: " + autore + "\n" +
                 "💿 Formato: " + formato + "\n" +
-                "💰 Prezzo: " + prezzo + "\n";
+                "💰 Prezzo: " + prezzo + "\n" +
+                "";
     }
 }

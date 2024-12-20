@@ -6,7 +6,13 @@ import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageTe
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
+
+import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -15,6 +21,9 @@ import static java.lang.Math.toIntExact;
 
 public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
     Boolean Notiiche = true;
+    UtenteDB Udb = new UtenteDB("127.0.0.1", "3306", "root", "");
+    AlbumDB Adb = new AlbumDB("127.0.0.1", "3306", "root", "");
+    salvaDB Sdb = new salvaDB("127.0.0.1", "3306", "root", "");
 
     private final TelegramClient telegramClient;
 
@@ -37,7 +46,7 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
                     Search(Album[0].trim(), Album[1].trim(), chat_id);
                     break;
                 case "/history":
-                    History(Album[0].trim(), chat_id);
+                    History(chat_id);
                     break;
                 case "/all":
                     All(chat_id);
@@ -54,18 +63,29 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
             }
         } else if (update.hasCallbackQuery()) {
             String call_data = update.getCallbackQuery().getData();
-            long message_id = update.getCallbackQuery().getMessage().getMessageId();
+            Album album = estraiAlbum(String.valueOf(update.getCallbackQuery().getMessage()));
             long chat_id = update.getCallbackQuery().getMessage().getChatId();
-            if (call_data.equals("update_msg_text")) {
-                String answer = "OK Attiveremo le notifiche per questo prodotto";
-                SendMessage new_message = SendMessage.builder()
-                        .chatId(chat_id)
-                        .text(answer)
-                        .build();
-                try {
-                    telegramClient.execute(new_message);
-                } catch (TelegramApiException e) {
-                    e.printStackTrace();
+            if (call_data.equals("update_msg_text"))
+                Save(chat_id, album);
+            else if (call_data.equals("history_msg_text")){
+                String nomi = String.valueOf(update.getCallbackQuery().getMessage());
+                Pattern pattern = Pattern.compile("text=(.*?)[\\n]+(.*?)\\, entities");
+                Matcher matcher = pattern.matcher(nomi);
+
+                if (matcher.find()) {
+                    String author = matcher.group(1).trim();  // Primo gruppo: autore
+                    String songTitle = matcher.group(2).trim();  // Secondo gruppo: titolo della canzone
+                    String[] fields = Adb.selectALL("Albums", "nome_artista", "nome_album", author, songTitle).split("\t");
+                    if (fields.length >= 9) {
+                        System.out.println(Arrays.toString(fields));
+                        String formattedText = String.format(
+                                "Autore: %s\nTitolo: %s\nFormato: %s\nVenditore: %s\nPrezzo attuale: %s\nPrezzo minore: %s\nData del prezzo minore: %s\nPrezzo maggiore: %s\nData del prezzo maggiore: %s",
+                                fields[0], fields[1], fields[2], fields[6], fields[7], fields[9], fields[11], fields[12], fields[14]
+                        );
+                        SendMsg(formattedText, chat_id);
+                    } else {
+                        System.out.println("Dati insufficienti.");
+                    }
                 }
             }
         }
@@ -73,8 +93,7 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
 
     public void Start(long chat_id) {
         String Risposta = "Ciao, sono DiscoVibesBot! Trova e risparmia sui dischi in vinile e CD. Cosa stai cercando oggi?";
-        UtenteDB db = new UtenteDB("172.0.0.1", "3036", "root", "");
-        db.insertUser(chat_id);
+        Udb.insertUser(chat_id);
         SendMsg(Risposta, chat_id);
     }
 
@@ -89,12 +108,18 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         }
     }
 
-    public void Save(long chat_id) {
+    public void Save(long chat_id, Album album) {
         String Risposta = "Album aggiunto correttamente al database \uD83D\uDE01";
+        Adb.insertAlbum(album);
+        Sdb.insertSave(chat_id, album);
+        SendMsg(Risposta, chat_id);
     }
 
-    public void History(String titolo, long chat_id) {
-        String Risposta = "L'album " + titolo + " ha avuto il minimo in 'data' a 'prezzo' e il 'massimo' in 'data' a 'prezzo'";
+    public void History(long chat_id) {
+        String[] nomi = Sdb.selectALL("Salva", "Id_Utente", chat_id).split("69104"); //mi serviva un qualcosa per fare lo split.
+        for (int i = 0; i < nomi.length; i++) {
+            HistoryResult(nomi[i], chat_id);
+        }
     }
 
     public void All(long chat_id) {
@@ -107,7 +132,8 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
     }
 
     public void Notify(long chat_id) {
-        String Risposta = "OK! Disattivo le notifiche";
+        String Risposta = "Il bot perde di significato senza le notifiche. \nSe non ti interessa muta il bot dalle impostazioni di Telegram.";
+        SendMsg(Risposta, chat_id);
     }
 
     public void Help(long chat_id) {
@@ -164,6 +190,30 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         }
     }
 
+    public void HistoryResult(String Risposta, long chat_id) {
+        SendMessage message = SendMessage // Create a message object
+                .builder()
+                .chatId(chat_id)
+                .text(Risposta)
+                .replyMarkup(InlineKeyboardMarkup
+                        .builder()
+                        .keyboardRow(
+                                new InlineKeyboardRow(InlineKeyboardButton
+                                        .builder()
+                                        .text("Questo!")
+                                        .callbackData("history_msg_text")
+                                        .build()
+                                )
+                        )
+                        .build())
+                .build();
+        try {
+            telegramClient.execute(message); // Sending our message object to user
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void Sendphoto(String image, long chat_id) {
         SendPhoto msg = SendPhoto.builder().chatId(chat_id).photo(new InputFile(image)).caption("").build();
         try {
@@ -171,5 +221,32 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
+    }
+
+    public static Album estraiAlbum(String Album) {
+        String fornitore = "";
+        Pattern fornitorePattern = Pattern.compile("Fornitore (.*?):");
+        Matcher matcher = fornitorePattern.matcher(Album);
+        if (matcher.find()) {
+            fornitore = matcher.group(1);
+        }
+
+        // Estrazione dei dati dell'album
+        String titolo = extractData(Album, "🎵 Album: (.*?)\n");
+        String autore = extractData(Album, "🧑‍🎤 Artista: (.*?)\n");
+        String formato = extractData(Album, "💿 Formato: (.*?)\n");
+        String prezzo = extractData(Album, "💰 Prezzo: (.*?), ");
+
+        return new Album(prezzo, autore, titolo, formato, "", fornitore);
+    }
+
+    // Metodo per estrarre i dati generali come titolo, autore, formato e prezzo
+    private static String extractData(String Album, String regex) {
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(Album);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return "";
     }
 }

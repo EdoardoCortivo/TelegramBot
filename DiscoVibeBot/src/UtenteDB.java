@@ -128,7 +128,7 @@ public class UtenteDB {
             e.printStackTrace();
             return false;
         }
-        String query = "INSERT INTO User (chat_id) VALUES (?)";
+        String query = "INSERT INTO Utenti (id) VALUES (?)";
         try {
             PreparedStatement statement = conn.prepareStatement(query);
             statement.setLong(1, chat_id);

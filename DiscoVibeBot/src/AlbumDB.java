@@ -36,14 +36,18 @@ public class AlbumDB {
 
     private void createTableIfNotExists() {
         String createTableSQL = "CREATE TABLE IF NOT EXISTS Albums (" +
-                "id INT AUTO_INCREMENT PRIMARY KEY, " +
                 "nome_artista VARCHAR(255) NOT NULL, " +
                 "nome_album VARCHAR(255) NOT NULL, " +
-                "prezzo_attuale DECIMAL(10, 2), " +
-                "prezzo_minimo DECIMAL(10, 2), " +
+                "formato VARCHAR(255) NOT NULL, " +
+                "immagine VARCHAR(255) NOT NULL, " +
+                "venditore VARCHAR(255) NOT NULL, " +
+                "prezzo_attuale VARCHAR(255) NOT NULL, " +
+                "prezzo_minimo VARCHAR(255) NOT NULL, " +
                 "data_minimo DATE, " +
-                "prezzo_massimo DECIMAL(10, 2), " +
-                "data_massimo DATE);";;
+                "prezzo_massimo VARCHAR(255) NOT NULL, " +
+                "data_massimo DATE, " +
+                "PRIMARY KEY (nome_artista, nome_album)" +
+                ");";
 
         try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate(createTableSQL);
@@ -96,7 +100,7 @@ public class AlbumDB {
         return result;
     }
 
-    public String selectALL(String from) {
+    public String selectALL(String from, String where, String where2, String is, String is2) {
         String result = "";
         try {
             if (!conn.isValid(5)) {
@@ -105,10 +109,12 @@ public class AlbumDB {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        String query = "SELECT * FROM " + from;
+        String query = "SELECT * FROM " + from+ " WHERE " + where + " = ?" + " AND " + where2 + " = ? ";
 
         try {
             PreparedStatement statement = conn.prepareStatement(query);
+            statement.setString(1, is);
+            statement.setString(2, is2);
             ResultSet rs = statement.executeQuery();
             while (rs.next()) {
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
@@ -116,7 +122,7 @@ public class AlbumDB {
                     //if the record is too short this if add a new tabulation
                     if (rs.getString(i).length() < 8) result += "\t";
                 }
-                result += "\n";
+                result += "\t";
             }
         } catch (SQLException e) {
             e.printStackTrace();

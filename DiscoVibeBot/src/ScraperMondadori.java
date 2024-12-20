@@ -63,16 +63,16 @@ public class ScraperMondadori {
                 }
                 if(formato2 != "")
                 {
-                    if(titolo.toLowerCase().contains(Nome.toLowerCase())) {
+                    //if(titolo.toLowerCase().contains(Nome.toLowerCase())) {
                         Album album = new Album(prezzo2, artista, titolo, formato2, Image, "Mondadori");
                         albums.add(album);
-                    }
+                    //}
                 }
-                if(titolo.toLowerCase().contains(Nome.toLowerCase())) {
+                //if(titolo.toLowerCase().contains(Nome.toLowerCase())) {
                     Album album = new Album(prezzo1, artista, titolo, formato1, Image, "Mondadori");
                     albums.add(album);
 
-                }
+                //}
                 System.out.println(titolo.toLowerCase());
             }
 
