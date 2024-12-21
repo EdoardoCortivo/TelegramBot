@@ -22,8 +22,8 @@ import static java.lang.Math.toIntExact;
 public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
     Boolean Notiiche = true;
     UtenteDB Udb = new UtenteDB("127.0.0.1", "3306", "root", "");
-    AlbumDB Adb = new AlbumDB("127.0.0.1", "3306", "root", "");
-    salvaDB Sdb = new salvaDB("127.0.0.1", "3306", "root", "");
+    static AlbumDB Adb = new AlbumDB("127.0.0.1", "3306", "root", "");
+    static salvaDB Sdb = new salvaDB("127.0.0.1", "3306", "root", "");
 
     private final TelegramClient telegramClient;
 
@@ -77,14 +77,13 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
                     String songTitle = matcher.group(2).trim();  // Secondo gruppo: titolo della canzone
                     String[] fields = Adb.selectALL("Albums", "nome_artista", "nome_album", author, songTitle).split("\t");
                     if (fields.length >= 9) {
-                        System.out.println(Arrays.toString(fields));
                         String formattedText = String.format(
                                 "Autore: %s\nTitolo: %s\nFormato: %s\nVenditore: %s\nPrezzo attuale: %s\nPrezzo minore: %s\nData del prezzo minore: %s\nPrezzo maggiore: %s\nData del prezzo maggiore: %s",
                                 fields[0], fields[1], fields[2], fields[6], fields[7], fields[9], fields[11], fields[12], fields[14]
                         );
                         SendMsg(formattedText, chat_id);
                     } else {
-                        System.out.println("Dati insufficienti.");
+                        SendMsg("Qualcosa è andato storto", chat_id);
                     }
                 }
             }
@@ -101,10 +100,18 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         List<Album> albums = new java.util.ArrayList<>(List.of());
         albums.addAll(ScraperMondadori.ScraperM(titolo, artista));
         albums.addAll(ScraperFeltrinelli.ScraperF(titolo, artista));
-        for (Album album : albums) {
-            String Risposta = album.toString();
-            Sendphoto(album.getImmagine(), chat_id);
-            SendSearchResult(Risposta, chat_id);
+        if(!albums.isEmpty()) {
+            for (Album album : albums) {
+                String Risposta = album.toString();
+                Sendphoto(album.getImmagine(), chat_id);
+                SendSearchResult(Risposta, chat_id);
+            }
+        }
+        else
+        {
+            SendMsg("Non ho trovato nulla. 😓\n" +
+                    "Sei sicuro di aver scritto giusto? 😟\n" +
+                    "Se il problema persiste prova a scrivere solo una parte del titolo o dell'artista", chat_id);
         }
     }
 
@@ -116,23 +123,26 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
     }
 
     public void History(long chat_id) {
-        String[] nomi = Sdb.selectALL("Salva", "Id_Utente", chat_id).split("69104"); //mi serviva un qualcosa per fare lo split.
+        String[] nomi = Sdb.select("Salva", "Id_Utente", chat_id).split("69104"); //mi serviva un qualcosa per fare lo split.
         for (int i = 0; i < nomi.length; i++) {
             HistoryResult(nomi[i], chat_id);
         }
     }
 
     public void All(long chat_id) {
-        String Risposta = "Ecco tutti gli Album che hai salvato:\n" +
-                "- Titolo Artista\n" +
-                "- Titolo Artista\n" +
-                "- Titolo Artista\n" +
-                "- Titolo Artista";
+        String Risposta = "Ecco tutti gli Album che hai salvato:\n";
+        String[] nomi = Sdb.select("Salva", "Id_Utente", chat_id).split("69104");
         SendMsg(Risposta, chat_id);
+        for (int i = 0; i < nomi.length; i++) {
+            String reply = "Artista: " + nomi[i].split("\n")[0] + "\nTitolo: " + nomi[i].split("\n")[1];
+            SendMsg(reply, chat_id);
+        }
     }
 
     public void Notify(long chat_id) {
-        String Risposta = "Il bot perde di significato senza le notifiche. \nSe non ti interessa muta il bot dalle impostazioni di Telegram.";
+        String Risposta = "Il bot perde di significato senza le notifiche. \n" +
+                "Se non ti interessa muta il bot dalle impostazioni di Telegram. \n" +
+                "Al contrario, se non ti arrivano le notifiche prova a controllare se hai mutato il bot dalle imostazioni di Telegram";
         SendMsg(Risposta, chat_id);
     }
 
@@ -140,8 +150,7 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         String Risposta = "Ecco la lista dei comandi:\n" +
                 "/start: Avvia la conversazione con il bot e fornisce una breve introduzione su come utilizzare le funzionalità principali.\n" +
                 "/search <titolo>, <artista>: Permette all'utente di cercare un album in base al titolo e all'artista specificato. Il bot restituirà le opzioni di acquisto disponibili (CD o vinile) e i relativi prezzi.\n" +
-                "/save: Consente all'utente di salvare l'album trovato nel database per monitorarne i prezzi. Una volta salvato, il bot inizierà a tracciare i cambiamenti di prezzo e invierà notifiche in caso di variazioni.\n" +
-                "/history <titolo>, <artista>: Visualizza lo storico dei prezzi per l'album specificato, mostrando il prezzo minimo e massimo registrato, insieme alle date corrispondenti.\n" +
+                "/history: Visualizza lo storico dei prezzi per l'album specificato, mostrando il prezzo minimo e massimo registrato, insieme alle date corrispondenti.\n" +
                 "/all: Mostra una lista di tutti gli album che l'utente ha salvato nel database, consentendo di visualizzare rapidamente gli album monitorati e i loro prezzi attuali.\n" +
                 "/notify: Abilita o disabilita le notifiche riguardo alle variazioni di prezzo per gli album salvati.\n" +
                 "/help: Fornisce informazioni dettagliate sui comandi disponibili e su come utilizzarli correttamente.";
@@ -162,6 +171,7 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         try {
             telegramClient.execute(message); // Sending our message object to user
         } catch (TelegramApiException e) {
+            System.out.println("Il programma ha cercato di inviare un messaggio, ma non c'è riuscito.");
             e.printStackTrace();
         }
     }
@@ -186,6 +196,7 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         try {
             telegramClient.execute(message); // Sending our message object to user
         } catch (TelegramApiException e) {
+            System.out.println("Il programma ha cercato di rispondere alla ricerca, ma non c'è riuscito.");
             e.printStackTrace();
         }
     }
@@ -210,6 +221,7 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         try {
             telegramClient.execute(message); // Sending our message object to user
         } catch (TelegramApiException e) {
+            System.out.println("Il programma ha cercato di inviare la storia, ma non c'è riuscito.");
             e.printStackTrace();
         }
     }
@@ -219,6 +231,7 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         try {
             telegramClient.execute(msg); // Call method to send the message
         } catch (TelegramApiException e) {
+            System.out.println("Il programma ha cercato di inviare una foto, ma non c'è riuscito.");
             e.printStackTrace();
         }
     }
@@ -248,5 +261,38 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
             return matcher.group(1);
         }
         return "";
+    }
+
+    public static void Save(Album album) {
+        Adb.updateAlbum(album);
+    }
+
+    public static void ServerUpdate() {
+        String[] nomi = Sdb.selectAll("Salva").split("69104");
+        for (int i = 0; i < nomi.length; i++) {
+            String scraper = Sdb.selectScraper("nome_artista", "nome_album", nomi[i].split("\n")[0], nomi[i].split("\n")[1]);
+            String formato = Sdb.selectFormato("nome_artista", "nome_album", nomi[i].split("\n")[0], nomi[i].split("\n")[1]);
+            if(scraper.contains("Feltrinelli"))
+            {
+                List<Album> Albums = ScraperFeltrinelli.ScraperF(nomi[i].split("\n")[0], nomi[i].split("\n")[1]);
+                for (Album album : Albums) {
+                    if(album.getFormato().contains(formato) && album.getTitolo().contains(nomi[i].split("\n")[1]))
+                    {
+                        MyTelegramBot.Save(album);
+                    }
+                }
+            }
+            else if(scraper.contains("Mondadori"))
+            {
+                List<Album> Albums = ScraperMondadori.ScraperM(nomi[i].split("\n")[0], nomi[i].split("\n")[1]);
+                for (Album album : Albums) {
+                    if(album.getAutore() == nomi[i].split("\n")[0] && album.getTitolo() == nomi[i].split("\n")[1])
+                    {
+                        MyTelegramBot.Save(album);
+                    }
+                }
+            }
+        }
+
     }
 }

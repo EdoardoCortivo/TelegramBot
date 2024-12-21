@@ -69,6 +69,37 @@ public class AlbumDB {
 
 //---------------------------------------------------------------------------------------------------------------------------
 
+    public String selectPrezzo(String what, String where, String where2 ,String is, String is2) {
+        String result = "";
+        try {
+            if (!conn.isValid(5)) {
+                return null;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+        String query = "SELECT " + what + " FROM Albums WHERE " + where + " = ?" + " AND " + where2 + " = ? ";
+
+        try {
+            PreparedStatement statement = conn.prepareStatement(query);
+            statement.setString(1, is);
+            statement.setString(2, is2);
+            ResultSet rs = statement.executeQuery();
+            while (rs.next()) {
+                for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+                    result += rs.getString(i) + "";
+                    if (rs.getString(i).length() < 8) result += "";
+                }
+                result += "";
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return result;
+    }
+
     public String select(String what, String from, String where, String where2 ,String is, String is2) {
         String result = "";
         try {
@@ -187,14 +218,24 @@ public class AlbumDB {
     }
 
     public boolean updateAlbum(Album album) {
-        String prezzo = select("prezzo_attuale","Albums","nome_artista", "nome_album", album.getAutore(), album.getTitolo());
-        String prezzoMax = select("prezzo_massimo","Albums","nome_artista", "nome_album", album.getAutore(), album.getTitolo());
-        String prezzoMin = select("prezzo_minimo","Albums","nome_artista", "nome_album", album.getAutore(), album.getTitolo());
+        String prezzo = selectPrezzo("prezzo_attuale","nome_artista", "nome_album", album.getAutore(), album.getTitolo());
+        String prezzoMax = selectPrezzo("prezzo_massimo","nome_artista", "nome_album", album.getAutore(), album.getTitolo());
+        String prezzoMin = selectPrezzo("prezzo_minimo","nome_artista", "nome_album", album.getAutore(), album.getTitolo());
 
-        Integer p = Integer.valueOf(prezzo.replace(" €", ""));
-        Integer pM = Integer.valueOf(prezzoMax.replace(" €", ""));
-        Integer pm = Integer.valueOf(prezzoMin.replace(" €", ""));
-        Integer pp = Integer.valueOf(album.getPrezzo().replace(" €", ""));
+        prezzo = prezzo.replace(" €", "");
+        prezzoMax = prezzoMax.replace(" €", "");
+        prezzoMin = prezzoMin.replace(" €", "");
+        String Nprezzo = album.getPrezzo().replace(" €", "");
+
+        prezzo = prezzo.replace(",", ".");
+        prezzoMax = prezzoMax.replace(",", ".");
+        prezzoMin = prezzoMin.replace(",", ".");
+        Nprezzo = Nprezzo.replace(",", ".");
+
+        double p = Double.parseDouble(prezzo);
+        double pM = Double.parseDouble(prezzoMax);
+        double pm = Double.parseDouble(prezzoMin);
+        double pp = Double.parseDouble(Nprezzo);
         LocalDateTime D = LocalDateTime.now();
 
         try {
@@ -205,42 +246,45 @@ public class AlbumDB {
             e.printStackTrace();
             return false;
         }
-
         if(pp<p){
             if(pp<pm) {
                 prezzoMin = album.getPrezzo();
-                String query = "UPDATE Albums SET prezzo_attuale = ? AND prezzo_minimo = ? AND data_minimo = ?) WHERE autore = ? AND titolo = ?";
+                String query = "UPDATE Albums SET prezzo_attuale = ?, prezzo_minimo = ?, data_minimo = ? WHERE nome_artista = ? AND nome_album = ?";
                 try {
                     PreparedStatement statement = conn.prepareStatement(query);
-                    statement.setString(1, album.getPrezzo());
-                    statement.setString(2, prezzoMin);
-                    statement.setDate(3, java.sql.Date.valueOf(D.toLocalDate()));
-                    statement.setString(4, album.getAutore());
-                    statement.setString(5, album.getTitolo());
+                    statement.setString(1, album.getPrezzo());  // Imposta il prezzo attuale
+                    statement.setString(2, prezzoMin);          // Imposta il prezzo minimo
+                    statement.setDate(3, java.sql.Date.valueOf(D.toLocalDate()));  // Imposta la data minima
+                    statement.setString(4, album.getAutore());  // Imposta l'autore
+                    statement.setString(5, album.getTitolo());  // Imposta il titolo
+
+                    // Esegui l'aggiornamento
                     statement.executeUpdate();
 
                 } catch (SQLException e) {
                     e.printStackTrace();
-                    return false;
+                    return false;  // Restituisce false in caso di errore
                 }
             }
         }
         else{
             if(pp>pM) {
                 prezzoMax = album.getPrezzo();
-                String query = "UPDATE Albums SET prezzo_attuale = ? AND prezzo_massimo = ? AND data_massimo = ?) WHERE autore = ? AND titolo = ?";
+                String query = "UPDATE Albums SET prezzo_attuale = ?, prezzo_minimo = ?, data_minimo = ? WHERE nome_artista = ? AND nome_album = ?";
                 try {
                     PreparedStatement statement = conn.prepareStatement(query);
-                    statement.setString(1, album.getPrezzo());
-                    statement.setString(2, prezzoMax);
-                    statement.setDate(3, java.sql.Date.valueOf(D.toLocalDate()));
-                    statement.setString(4, album.getAutore());
-                    statement.setString(5, album.getTitolo());
+                    statement.setString(1, album.getPrezzo());  // Imposta il prezzo attuale
+                    statement.setString(2, prezzoMin);          // Imposta il prezzo minimo
+                    statement.setDate(3, java.sql.Date.valueOf(D.toLocalDate()));  // Imposta la data minima
+                    statement.setString(4, album.getAutore());  // Imposta l'autore
+                    statement.setString(5, album.getTitolo());  // Imposta il titolo
+
+                    // Esegui l'aggiornamento
                     statement.executeUpdate();
 
                 } catch (SQLException e) {
                     e.printStackTrace();
-                    return false;
+                    return false;  // Restituisce false in caso di errore
                 }
             }
         }

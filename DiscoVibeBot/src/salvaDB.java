@@ -65,7 +65,7 @@ public class salvaDB {
 
 //---------------------------------------------------------------------------------------------------------------------------
 
-    public String select(String what, String what2, String from, String where,long is) {
+    public String selectScraper(String where, String where2 ,String is, String is2) {
         String result = "";
         try {
             if (!conn.isValid(5)) {
@@ -73,29 +73,64 @@ public class salvaDB {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            return null;
         }
-        String query = "SELECT " + what + " AND " + what2 + " FROM " + from + " WHERE " + where + " = ?";
+        String query = "SELECT venditore FROM Albums WHERE " + where + " = ?" + " AND " + where2 + " = ? ";
 
         try {
             PreparedStatement statement = conn.prepareStatement(query);
-            statement.setLong(1, is);
+            statement.setString(1, is);
+            statement.setString(2, is2);
             ResultSet rs = statement.executeQuery();
             while (rs.next()) {
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-                    result += rs.getString(i) + "\t";
-                    if (rs.getString(i).length() < 8) result += "\t";
+                    result += rs.getString(i) + "";
+                    //if the record is too short this if add a new tabulation
+                    if (rs.getString(i).length() < 8) result += "";
                 }
-                result += "\n";
+                result += "";
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            return null;
         }
+
+
         return result;
     }
 
-    public String selectALL(String from, String where, long is) {
+    public String selectFormato(String where, String where2 ,String is, String is2) {
+        String result = "";
+        try {
+            if (!conn.isValid(5)) {
+                return null;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        String query = "SELECT formato FROM Albums WHERE " + where + " = ?" + " AND " + where2 + " = ? ";
+
+        try {
+            PreparedStatement statement = conn.prepareStatement(query);
+            statement.setString(1, is);
+            statement.setString(2, is2);
+            ResultSet rs = statement.executeQuery();
+            while (rs.next()) {
+                for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+                    result += rs.getString(i) + "";
+                    //if the record is too short this if add a new tabulation
+                    if (rs.getString(i).length() < 8) result += "";
+                }
+                result += "";
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+
+        return result;
+    }
+
+
+    public String select(String from, String where, long is) {
         String result = "";
         try {
             if (!conn.isValid(5)) {
@@ -109,6 +144,36 @@ public class salvaDB {
         try {
             PreparedStatement statement = conn.prepareStatement(query);
             statement.setLong(1, is);
+            ResultSet rs = statement.executeQuery();
+            while (rs.next()) {
+                for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+                    result += rs.getString(i) + "\n";
+                    //if the record is too short this if add a new tabulation
+                    if (rs.getString(i).length() < 8) result += "\n";
+                }
+                result += "69104";
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+
+        return result;
+    }
+
+    public String selectAll(String from) {
+        String result = "";
+        try {
+            if (!conn.isValid(5)) {
+                return null;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        String query = "SELECT nome_artista, nome_album FROM " + from;
+
+        try {
+            PreparedStatement statement = conn.prepareStatement(query);
             ResultSet rs = statement.executeQuery();
             while (rs.next()) {
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {

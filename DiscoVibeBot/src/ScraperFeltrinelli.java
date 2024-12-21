@@ -12,30 +12,28 @@ public class ScraperFeltrinelli {
 
     public static List<Album> ScraperF(String Nome, String Autore) {
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless"); // Modalità senza interfaccia grafica
-        options.addArguments("--disable-gpu"); // Necessario su alcune piattaforme
+        options.addArguments("--headless");
+        options.addArguments("--disable-gpu");
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
         options.addArguments("--window-size=1920,1080");
-        WebDriver driver = new ChromeDriver();
+        options.addArguments("--disable-notifications");
+        options.addArguments("--disable-extensions");
+        WebDriver driver = new ChromeDriver(options);
         List<Album> albums = new ArrayList<>();
 
         try {
             driver.get("https://www.lafeltrinelli.it/");
 
-            /*try {
-                Thread.sleep(10000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }*/
 
             WebElement searchInput = driver.findElement(By.id("inputSearch"));
             searchInput.sendKeys(Autore + " " + Nome);
             searchInput.sendKeys(Keys.ENTER);
 
             try {
-                Thread.sleep(5000);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
+                System.out.println("Il programma ha cercato stoppare la pagina web, ma non c'è riuscito.");
                 e.printStackTrace();
             }
 
@@ -43,29 +41,29 @@ public class ScraperFeltrinelli {
 
             for (WebElement element : Divs) {
                 String[] lines = element.getText().split("\n");
-                String Image = element.findElement(By.xpath(".//a[@class='cc-img-link']//img[@class='cc-img']")).getAttribute("data-url"); //boh sto andando a caso
+                String Image = element.findElement(By.xpath(".//a[@class='cc-img-link']//img[@class='cc-img']")).getAttribute("data-url");
                 String titolo = "";
                 String artista = "";
                 String formato = "";
                 String prezzo = "";
-                if(lines.length >= 1) titolo = lines[0];
-                if(lines.length >= 2) artista = lines[1].replace("di ", "");
-                if(lines.length >= 4) formato = lines[3].split(" | ")[0];
-                if(lines[5].contains("€")) prezzo = lines[5];
-                if(lines[6].contains("€")) prezzo = lines[6];
-                //if(titolo.toLowerCase().contains(Nome.toLowerCase())&& (formato.contains("Vinili")|| formato.contains("Cd"))) {
-                    Album album = new Album(prezzo, artista, titolo, formato, Image, "Feltrinelli");
-                    albums.add(album);
 
-                //}
-                System.out.println(titolo);
+                if (lines.length >= 1) titolo = lines[0];
+                if (lines.length >= 2) artista = lines[1].replace("di ", "");
+                if (lines.length >= 4) formato = lines[3].split(" | ")[0];
+                if (lines[5].contains("€")) prezzo = lines[5];
+                if (lines[6].contains("€")) prezzo = lines[6];
+                System.out.println(titolo.toLowerCase() + "\n" + artista.toLowerCase());
+                if (titolo.toLowerCase().contains(Nome.toLowerCase()) || artista.toLowerCase().contains(Autore.toLowerCase())) {
+                    if (formato.toLowerCase().contains("vinili") || formato.toLowerCase().contains("cd")) {
+                        Album album = new Album(prezzo, artista, titolo, formato, Image, "Feltrinelli");
+                        albums.add(album);
+                    }
+                }
             }
 
-            for (Album album : albums) {
-                System.out.println(album);
-            }
 
         } catch (Exception e) {
+            System.out.println("Il programma ha cercato di accedere alla pagina web, ma non c'è riuscito.");
             e.printStackTrace();
         } finally {
             driver.quit();

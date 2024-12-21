@@ -10,30 +10,27 @@ import java.util.List;
 public class ScraperMondadori {
     public static List<Album> ScraperM(String Nome, String Autore) {
         ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless"); // Modalità senza interfaccia grafica
-        options.addArguments("--disable-gpu"); // Necessario su alcune piattaforme
+        options.addArguments("--headless");
+        options.addArguments("--disable-gpu");
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
         options.addArguments("--window-size=1920,1080");
-        WebDriver driver = new ChromeDriver();
+        options.addArguments("--disable-notifications");
+        options.addArguments("--disable-extensions");
+        WebDriver driver = new ChromeDriver(options);
         List<Album> albums = new ArrayList<>();
 
         try {
             driver.get("https://www.mondadoristore.it");
-
-            /*try {
-                Thread.sleep(10000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }*/
 
             WebElement searchInput = driver.findElement(By.id("search-input"));
             searchInput.sendKeys(Autore + " " + Nome);
             searchInput.sendKeys(Keys.ENTER);
 
             try {
-                Thread.sleep(2500);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
+                System.out.println("Il programma ha cercato stoppare la pagina web, ma non c'è riuscito.");
                 e.printStackTrace();
             }
 
@@ -48,8 +45,10 @@ public class ScraperMondadori {
                 String prezzo1 = "";
                 String formato2 = "";
                 String prezzo2 = "";
+
                 if (lines.length >= 1) titolo = lines[0];
                 if (lines.length >= 2) artista = lines[1];
+
                 for (int i = 2; i < lines.length; i++) {
                     if (lines[i].contains("Musica -")) {
                         formato1 = lines[i].split(" - ")[1];
@@ -61,22 +60,27 @@ public class ScraperMondadori {
                         prezzo2 = lines[i].replace("Vinile", "").trim();
                     }
                 }
-                if(formato2 != "")
-                {
-                    //if(titolo.toLowerCase().contains(Nome.toLowerCase())) {
+
+                // Filtro per il formato e per il titolo e artista
+                if (formato2 != "") {
+                    if (titolo.toLowerCase().contains(Nome.toLowerCase()) || artista.toLowerCase().contains(Autore.toLowerCase())) {
                         Album album = new Album(prezzo2, artista, titolo, formato2, Image, "Mondadori");
                         albums.add(album);
-                    //}
+                    }
                 }
-                //if(titolo.toLowerCase().contains(Nome.toLowerCase())) {
-                    Album album = new Album(prezzo1, artista, titolo, formato1, Image, "Mondadori");
-                    albums.add(album);
 
-                //}
-                System.out.println(titolo.toLowerCase());
+                // Aggiungi un controllo per il primo formato (CD o altro)
+                if (formato1 != "") {
+                    if (titolo.toLowerCase().contains(Nome.toLowerCase()) || artista.toLowerCase().contains(Autore.toLowerCase())) {
+                        Album album = new Album(prezzo1, artista, titolo, formato1, Image, "Mondadori");
+                        albums.add(album);
+                    }
+                }
             }
 
+
         } catch (Exception e) {
+            System.out.println("Il programma ha cercato di accedere alla pagina web, ma non c'è riuscito.");
             e.printStackTrace();
         } finally {
             driver.quit();
