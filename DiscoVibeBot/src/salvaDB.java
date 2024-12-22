@@ -40,9 +40,8 @@ public class salvaDB {
                 "nome_artista VARCHAR(255) NOT NULL, " +
                 "nome_album VARCHAR(255) NOT NULL, " +
                 "PRIMARY KEY (Id_Utente, nome_artista, nome_album), " +
-                "FOREIGN KEY (Id_Utente) REFERENCES Utenti(id), " +
-                "FOREIGN KEY (nome_artista, nome_album) REFERENCES Albums(nome_artista, nome_album)" +
-                ");";
+                "FOREIGN KEY (Id_Utente) REFERENCES Utenti (id), " +
+                "FOREIGN KEY (nome_artista, nome_album) REFERENCES Albums (nome_artista, nome_album));";
 
         try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate(createTableSQL);
@@ -147,9 +146,9 @@ public class salvaDB {
             ResultSet rs = statement.executeQuery();
             while (rs.next()) {
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-                    result += rs.getString(i) + "\n";
+                    result += rs.getString(i) + "____";
                     //if the record is too short this if add a new tabulation
-                    if (rs.getString(i).length() < 8) result += "\n";
+                    if (rs.getString(i).length() < 8) result += "";
                 }
                 result += "69104";
             }

@@ -69,22 +69,23 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
                 Save(chat_id, album);
             else if (call_data.equals("history_msg_text")){
                 String nomi = String.valueOf(update.getCallbackQuery().getMessage());
-                Pattern pattern = Pattern.compile("text=(.*?)[\\n]+(.*?)\\, entities");
+                Pattern pattern = Pattern.compile("text=(.*?)[\\n]+(.*?), entities");
                 Matcher matcher = pattern.matcher(nomi);
 
                 if (matcher.find()) {
                     String author = matcher.group(1).trim();  // Primo gruppo: autore
                     String songTitle = matcher.group(2).trim();  // Secondo gruppo: titolo della canzone
-                    String[] fields = Adb.selectALL("Albums", "nome_artista", "nome_album", author, songTitle).split("\t");
-                    if (fields.length >= 9) {
-                        String formattedText = String.format(
-                                "Autore: %s\nTitolo: %s\nFormato: %s\nVenditore: %s\nPrezzo attuale: %s\nPrezzo minore: %s\nData del prezzo minore: %s\nPrezzo maggiore: %s\nData del prezzo maggiore: %s",
-                                fields[0], fields[1], fields[2], fields[6], fields[7], fields[9], fields[11], fields[12], fields[14]
-                        );
-                        SendMsg(formattedText, chat_id);
-                    } else {
-                        SendMsg("Qualcosa è andato storto", chat_id);
-                    }
+                    String[] fields = Adb.selectALL("Albums", "nome_artista", "nome_album", author, songTitle).split("____");
+                    String reply = "Autore: " + fields[0] +
+                            "\nTitolo: " + fields[1] +
+                            "\nFormato: " + fields[2] +
+                            "\nFornitore: " + fields[4] +
+                            "\nPrezzo attuale: " + fields[5] +
+                            "\nPrezzo minimo: " + fields[6] +
+                            "\nData prezzo minimo: " + fields[7] +
+                            "\nPrezzo massimo: " + fields[8] +
+                            "\nData prezzo massimo: " + fields[9];
+                    SendMsg(reply, chat_id);
                 }
             }
         }
@@ -111,7 +112,7 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         {
             SendMsg("Non ho trovato nulla. 😓\n" +
                     "Sei sicuro di aver scritto giusto? 😟\n" +
-                    "Se il problema persiste prova a scrivere solo una parte del titolo o dell'artista", chat_id);
+                    "Tips: Prova a scrivere come solo le parti che sai che sono giuste", chat_id);
         }
     }
 
@@ -125,7 +126,7 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
     public void History(long chat_id) {
         String[] nomi = Sdb.select("Salva", "Id_Utente", chat_id).split("69104"); //mi serviva un qualcosa per fare lo split.
         for (int i = 0; i < nomi.length; i++) {
-            HistoryResult(nomi[i], chat_id);
+            HistoryResult(nomi[i].replace("____", "\n"), chat_id);
         }
     }
 
@@ -134,7 +135,8 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         String[] nomi = Sdb.select("Salva", "Id_Utente", chat_id).split("69104");
         SendMsg(Risposta, chat_id);
         for (int i = 0; i < nomi.length; i++) {
-            String reply = "Artista: " + nomi[i].split("\n")[0] + "\nTitolo: " + nomi[i].split("\n")[1];
+            System.out.println(nomi[i]);
+            String reply = "Artista: " + nomi[i].split("____")[0] + "\nTitolo: " + nomi[i].split("____")[1];
             SendMsg(reply, chat_id);
         }
     }
@@ -148,11 +150,11 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
 
     public void Help(long chat_id) {
         String Risposta = "Ecco la lista dei comandi:\n" +
-                "/start: Avvia la conversazione con il bot e fornisce una breve introduzione su come utilizzare le funzionalità principali.\n" +
-                "/search <titolo>, <artista>: Permette all'utente di cercare un album in base al titolo e all'artista specificato. Il bot restituirà le opzioni di acquisto disponibili (CD o vinile) e i relativi prezzi.\n" +
-                "/history: Visualizza lo storico dei prezzi per l'album specificato, mostrando il prezzo minimo e massimo registrato, insieme alle date corrispondenti.\n" +
-                "/all: Mostra una lista di tutti gli album che l'utente ha salvato nel database, consentendo di visualizzare rapidamente gli album monitorati e i loro prezzi attuali.\n" +
-                "/notify: Abilita o disabilita le notifiche riguardo alle variazioni di prezzo per gli album salvati.\n" +
+                "/start: Avvia la conversazione con il bot.\n" +
+                "/search: Permette all'utente di cercare un album --Esempio: /search Hello World, Pinguini Tattici Nucleari--.\n" +
+                "/history: Visualizza le informazioni dell'album specificato.\n" +
+                "/all: Mostra una lista di tutti gli album che l'utente ha salvato nel database.\n" +
+                "/notify: Abilita o disabilita le notifiche.\n" +
                 "/help: Fornisce informazioni dettagliate sui comandi disponibili e su come utilizzarli correttamente.";
         SendMsg(Risposta, chat_id);
     }

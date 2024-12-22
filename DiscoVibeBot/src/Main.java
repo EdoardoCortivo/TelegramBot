@@ -15,7 +15,7 @@ public class Main {
             botsApplication.registerBot(botToken, new MyTelegramBot(botToken));
             System.out.println("DiscoVibesBot successfully started!");
 
-            schedulePeriodicTask();
+            //schedulePeriodicTask();
 
             Thread.currentThread().join();
         } catch (Exception e) {

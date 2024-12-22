@@ -149,11 +149,11 @@ public class AlbumDB {
             ResultSet rs = statement.executeQuery();
             while (rs.next()) {
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-                    result += rs.getString(i) + "\t";
+                    result += rs.getString(i) + "____";
                     //if the record is too short this if add a new tabulation
-                    if (rs.getString(i).length() < 8) result += "\t";
+                    if (rs.getString(i).length() < 8) result += "";
                 }
-                result += "\t";
+                result += "69104";
             }
         } catch (SQLException e) {
             e.printStackTrace();

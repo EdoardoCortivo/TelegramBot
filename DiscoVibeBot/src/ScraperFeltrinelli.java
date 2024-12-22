@@ -50,8 +50,14 @@ public class ScraperFeltrinelli {
                 if (lines.length >= 1) titolo = lines[0];
                 if (lines.length >= 2) artista = lines[1].replace("di ", "");
                 if (lines.length >= 4) formato = lines[3].split(" | ")[0];
-                if (lines[5].contains("€")) prezzo = lines[5];
-                if (lines[6].contains("€")) prezzo = lines[6];
+                for(int i = 0; i<lines.length; i++)
+                {
+                    if(lines[i].contains(" €"))
+                    {
+                        prezzo = lines[i];
+                        break;
+                    }
+                }
                 System.out.println(titolo.toLowerCase() + "\n" + artista.toLowerCase());
                 if (titolo.toLowerCase().contains(Nome.toLowerCase()) || artista.toLowerCase().contains(Autore.toLowerCase())) {
                     if (formato.toLowerCase().contains("vinili") || formato.toLowerCase().contains("cd")) {
