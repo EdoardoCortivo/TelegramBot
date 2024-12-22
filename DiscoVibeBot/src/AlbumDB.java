@@ -248,6 +248,7 @@ public class AlbumDB {
         }
         if(pp<p){
             if(pp<pm) {
+                MyTelegramBot.Notify(album);
                 prezzoMin = album.getPrezzo();
                 String query = "UPDATE Albums SET prezzo_attuale = ?, prezzo_minimo = ?, data_minimo = ? WHERE nome_artista = ? AND nome_album = ?";
                 try {

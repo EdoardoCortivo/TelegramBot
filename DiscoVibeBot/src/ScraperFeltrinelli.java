@@ -19,7 +19,7 @@ public class ScraperFeltrinelli {
         options.addArguments("--window-size=1920,1080");
         options.addArguments("--disable-notifications");
         options.addArguments("--disable-extensions");
-        WebDriver driver = new ChromeDriver(options);
+        WebDriver driver = new ChromeDriver(options); //options
         List<Album> albums = new ArrayList<>();
 
         try {
@@ -45,19 +45,11 @@ public class ScraperFeltrinelli {
                 String titolo = "";
                 String artista = "";
                 String formato = "";
-                String prezzo = "";
+                String prezzo = driver.findElement(By.xpath("(//div[@class='cc-product-list-item'])[1]")).getAttribute("data-tracking-price") + " €";
 
                 if (lines.length >= 1) titolo = lines[0];
                 if (lines.length >= 2) artista = lines[1].replace("di ", "");
                 if (lines.length >= 4) formato = lines[3].split(" | ")[0];
-                for(int i = 0; i<lines.length; i++)
-                {
-                    if(lines[i].contains(" €"))
-                    {
-                        prezzo = lines[i];
-                        break;
-                    }
-                }
                 if (titolo.toLowerCase().contains(Nome.toLowerCase()) || artista.toLowerCase().contains(Autore.toLowerCase())) {
                     if (formato.toLowerCase().contains("vinili") || formato.toLowerCase().contains("cd")) {
                         Album album = new Album(prezzo, artista, titolo, formato, Image, "Feltrinelli");

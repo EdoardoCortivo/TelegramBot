@@ -272,12 +272,11 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         String[] nomi = Sdb.selectAll("Salva").split("69104");
         for (int i = 0; i < nomi.length; i++) {
             String scraper = Sdb.selectScraper("nome_artista", "nome_album", nomi[i].split("\n")[0], nomi[i].split("\n")[1]);
-            String formato = Sdb.selectFormato("nome_artista", "nome_album", nomi[i].split("\n")[0], nomi[i].split("\n")[1]);
             if(scraper.contains("Feltrinelli"))
             {
-                List<Album> Albums = ScraperFeltrinelli.ScraperF(nomi[i].split("\n")[0], nomi[i].split("\n")[1]);
+                List<Album> Albums = ScraperFeltrinelli.ScraperF(nomi[i].split("\n")[1], nomi[i].split("\n")[0]);
                 for (Album album : Albums) {
-                    if(album.getFormato().contains(formato) && album.getTitolo().contains(nomi[i].split("\n")[1]))
+                    if(album.getTitolo().toLowerCase().contains(nomi[i].split("\n")[1].toLowerCase()))
                     {
                         MyTelegramBot.Save(album);
                     }
@@ -287,13 +286,22 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
             {
                 List<Album> Albums = ScraperMondadori.ScraperM(nomi[i].split("\n")[0], nomi[i].split("\n")[1]);
                 for (Album album : Albums) {
-                    if(album.getAutore() == nomi[i].split("\n")[0] && album.getTitolo() == nomi[i].split("\n")[1])
+                    if(album.getTitolo().toLowerCase().contains(nomi[i].split("\n")[1].toLowerCase()))
                     {
                         MyTelegramBot.Save(album);
                     }
                 }
             }
         }
+    }
 
+    public static void Notify(Album album)
+    {
+        String risposta = "Hey! L'album " + album.getTitolo() + " di " + album.getAutore() + " è in sconto! Fai /history per vedere il prezzo";
+        String botToken = "7845151823:AAElw1msUpQYaVPJ5SEt37rrfqE1q13dMwg";
+        String[] id = Sdb.selectUtente("Salva", "nome_artista", "nome_album", album.getAutore(), album.getTitolo()).split("____");
+        MyTelegramBot obj = new MyTelegramBot(botToken);
+        for (String chat_id : id)
+            obj.SendMsg(risposta, Long.parseLong(chat_id));
     }
 }

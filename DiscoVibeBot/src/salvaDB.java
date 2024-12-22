@@ -160,6 +160,38 @@ public class salvaDB {
         return result;
     }
 
+    public String selectUtente(String from, String where, String where2, String is, String is2) {
+        String result = "";
+        try {
+            if (!conn.isValid(5)) {
+                return null;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        String query = "SELECT Id_Utente FROM " + from + " WHERE " + where + " = ?" + " AND " + where2 + " = ? ";
+
+        try {
+            PreparedStatement statement = conn.prepareStatement(query);
+            statement.setString(1, is);
+            statement.setString(2, is2);
+            ResultSet rs = statement.executeQuery();
+            while (rs.next()) {
+                for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
+                    result += rs.getString(i) + "____";
+                    //if the record is too short this if add a new tabulation
+                    if (rs.getString(i).length() < 8) result += "";
+                }
+                result += "69104";
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+
+        return result;
+    }
+
     public String selectAll(String from) {
         String result = "";
         try {
