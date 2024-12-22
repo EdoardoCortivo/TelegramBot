@@ -135,7 +135,6 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         String[] nomi = Sdb.select("Salva", "Id_Utente", chat_id).split("69104");
         SendMsg(Risposta, chat_id);
         for (int i = 0; i < nomi.length; i++) {
-            System.out.println(nomi[i]);
             String reply = "Artista: " + nomi[i].split("____")[0] + "\nTitolo: " + nomi[i].split("____")[1];
             SendMsg(reply, chat_id);
         }

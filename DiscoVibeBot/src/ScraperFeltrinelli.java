@@ -58,7 +58,6 @@ public class ScraperFeltrinelli {
                         break;
                     }
                 }
-                System.out.println(titolo.toLowerCase() + "\n" + artista.toLowerCase());
                 if (titolo.toLowerCase().contains(Nome.toLowerCase()) || artista.toLowerCase().contains(Autore.toLowerCase())) {
                     if (formato.toLowerCase().contains("vinili") || formato.toLowerCase().contains("cd")) {
                         Album album = new Album(prezzo, artista, titolo, formato, Image, "Feltrinelli");
