@@ -249,7 +249,7 @@ public class AlbumDB {
         double pp = Double.parseDouble(Nprezzo);
         System.out.println("HELLo");
         LocalDateTime D = LocalDateTime.now();
-
+        String query;
         try {
             if (!conn.isValid(5)) {
                 return false;
@@ -261,8 +261,7 @@ public class AlbumDB {
         if(pp<p){
             System.out.println("CAIO");
             MyTelegramBot.Notify(album);
-            prezzoMin = album.getPrezzo();
-            String query = "UPDATE Albums SET prezzo_attuale = ? WHERE nome_artista = ? AND nome_album = ? AND formato = ? AND venditore = ?";
+            query = "UPDATE Albums SET prezzo_attuale = ? WHERE nome_artista = ? AND nome_album = ? AND formato = ? AND venditore = ?";
             try {
                 PreparedStatement statement = conn.prepareStatement(query);
                 statement.setString(1, album.getPrezzo());
@@ -297,7 +296,7 @@ public class AlbumDB {
             }
         }
         else{
-            String query = "UPDATE Albums SET prezzo_attuale = ? WHERE nome_artista = ? AND nome_album = ? AND formato = ? AND venditore = ?";
+            query = "UPDATE Albums SET prezzo_attuale = ? WHERE nome_artista = ? AND nome_album = ? AND formato = ? AND venditore = ?";
             try {
                 PreparedStatement statement = conn.prepareStatement(query);
                 statement.setString(1, album.getPrezzo());
@@ -313,7 +312,7 @@ public class AlbumDB {
             }
             if(pp>pM) {
                 prezzoMax = album.getPrezzo();
-                String query = "UPDATE Albums SET prezzo_attuale = ?, prezzo_minimo = ?, data_minimo = ? WHERE nome_artista = ? AND nome_album = ? AND formato = ? AND venditore = ?";
+                query = "UPDATE Albums SET prezzo_attuale = ?, prezzo_minimo = ?, data_minimo = ? WHERE nome_artista = ? AND nome_album = ? AND formato = ? AND venditore = ?";
                 try {
                     PreparedStatement statement = conn.prepareStatement(query);
                     statement.setString(1, album.getPrezzo());
