@@ -98,7 +98,6 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
                     String format = matcher.group(3).trim();
                     String seller = matcher.group(4).trim();
                     String[] risposta = Adb.selectALL("Albums", "nome_artista", "nome_album", "formato", "venditore", author, songTitle, format, seller).split("____");
-                    System.out.println(songTitle);
                     if(risposta.length > 1)
                         Sendphoto(risposta[1], chat_id);
                     SendMsg(risposta[0], chat_id);
@@ -153,7 +152,6 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
     public void History(long chat_id) {
         String[] nomi = Sdb.select("Salva", "Id_Utente", chat_id).split("69104"); //mi serviva un qualcosa per fare lo split.
         for (int i = 0; i < nomi.length; i++) {
-            System.out.println(nomi[i]);
             HistoryResult(nomi[i].replace("____", "\n"), chat_id);
         }
     }
@@ -281,24 +279,28 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
     }
 
     public static void ServerUpdate() {
-        String[] nomi = Sdb.selectAll("Salva").split("69104");
-        for (int i = 0; i < nomi.length; i++) {
-            String scraper = Sdb.selectScraper("nome_artista", "nome_album", nomi[i].split("\n")[0], nomi[i].split("\n")[1]);
-            if(scraper.contains("Feltrinelli"))
+        String[] albums = Sdb.selectAll("Salva").split("\n");
+        for (int i = 0; i < albums.length; i++) {
+            String artista = albums[i].split("____")[0];
+            String titolo = albums[i].split("____")[1];
+            String formato = albums[i].split("____")[2];
+            String venditore = albums[i].split("____")[3];
+            System.out.println(venditore);
+            if(venditore.contains("Feltrinelli"))
             {
-                List<Album> Albums = ScraperFeltrinelli.ScraperF(nomi[i].split("\n")[1], nomi[i].split("\n")[0]);
+                List<Album> Albums = ScraperFeltrinelli.ScraperF(titolo, artista);
                 for (Album album : Albums) {
-                    if(album.getTitolo().toLowerCase().contains(nomi[i].split("\n")[1].toLowerCase()))
+                    if(album.getTitolo().toLowerCase().contains(titolo.toLowerCase()) && album.getFormato().toLowerCase().contains(formato.toLowerCase()) && album.getAutore().toLowerCase().contains(artista.toLowerCase()))
                     {
                         MyTelegramBot.Save(album);
                     }
                 }
             }
-            else if(scraper.contains("Mondadori"))
+            else if(venditore.contains("Mondadori"))
             {
-                List<Album> Albums = ScraperMondadori.ScraperM(nomi[i].split("\n")[0], nomi[i].split("\n")[1]);
+                List<Album> Albums = ScraperMondadori.ScraperM(titolo, artista);
                 for (Album album : Albums) {
-                    if(album.getTitolo().toLowerCase().contains(nomi[i].split("\n")[1].toLowerCase()))
+                    if(album.getTitolo().toLowerCase().contains(titolo.toLowerCase()) && album.getFormato().toLowerCase().contains(formato.toLowerCase()) && album.getAutore().toLowerCase().contains(artista.toLowerCase()))
                     {
                         MyTelegramBot.Save(album);
                     }
@@ -311,7 +313,7 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
     {
         String risposta = "Hey! L'album " + album.getTitolo() + " di " + album.getAutore() + " è in sconto! Fai /history per vedere il prezzo";
         String botToken = "7845151823:AAElw1msUpQYaVPJ5SEt37rrfqE1q13dMwg";
-        String[] id = Sdb.selectUtente("Salva", "nome_artista", "nome_album", album.getAutore(), album.getTitolo()).split("____");
+        String[] id = Sdb.selectUtente("Salva", "nome_artista", "nome_album", "formato", "venditore",album.getAutore(), album.getTitolo(), album.getFormato(), album.getVenditore()).split("____");
         MyTelegramBot obj = new MyTelegramBot(botToken);
         for (String chat_id : id)
             obj.SendMsg(risposta, Long.parseLong(chat_id));

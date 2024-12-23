@@ -162,7 +162,7 @@ public class salvaDB {
         return result;
     }
 
-    public String selectUtente(String from, String where, String where2, String is, String is2) {
+    public String selectUtente(String from, String where, String where2, String where3, String where4, String is, String is2, String is3, String is4) {
         String result = "";
         try {
             if (!conn.isValid(5)) {
@@ -171,12 +171,14 @@ public class salvaDB {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        String query = "SELECT Id_Utente FROM " + from + " WHERE " + where + " = ?" + " AND " + where2 + " = ? ";
+        String query = "SELECT Id_Utente FROM " + from + " WHERE " + where + " = ?" + " AND " + where2 + " = ? " + " AND " + where3 + " = ? " + " AND " + where4 + " = ? ";
 
         try {
             PreparedStatement statement = conn.prepareStatement(query);
             statement.setString(1, is);
             statement.setString(2, is2);
+            statement.setString(3, is3);
+            statement.setString(4, is4);
             ResultSet rs = statement.executeQuery();
             while (rs.next()) {
                 for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
@@ -195,7 +197,7 @@ public class salvaDB {
     }
 
     public String selectAll(String from) {
-        String result = "";
+        StringBuilder result = new StringBuilder();
         try {
             if (!conn.isValid(5)) {
                 return null;
@@ -203,25 +205,28 @@ public class salvaDB {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        String query = "SELECT nome_artista, nome_album FROM " + from;
+        String query = "SELECT nome_artista, nome_album, formato, venditore FROM " + from;
 
         try {
             PreparedStatement statement = conn.prepareStatement(query);
             ResultSet rs = statement.executeQuery();
             while (rs.next()) {
-                for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-                    result += rs.getString(i) + "\n";
-                    //if the record is too short this if add a new tabulation
-                    if (rs.getString(i).length() < 8) result += "\n";
-                }
-                result += "69104";
+                String nomeArtista = rs.getString("nome_artista");
+                String nomeAlbum = rs.getString("nome_album");
+                String formato = rs.getString("formato");
+                String venditore = rs.getString("venditore");
+
+                // Formatta la riga come una stringa separata da tabulazioni o virgole, a seconda delle preferenze
+                String formattedLine = String.format("%s____%s____%s____%s",
+                        nomeArtista, nomeAlbum, formato, venditore);
+
+                // Aggiungi la stringa formattata al risultato
+                result.append(formattedLine).append("\n");
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
-
-        return result;
+        return result.toString();
     }
     //------------------------------------------------------------------------------------------------------------------------------------------------------------------\\
     public boolean insertSave(long chat_id, Album album) {
