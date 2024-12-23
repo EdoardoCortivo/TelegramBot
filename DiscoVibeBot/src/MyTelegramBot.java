@@ -90,12 +90,14 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
             }
             else if (callbackData.startsWith("h")) {
                 String nomi = String.valueOf(update.getCallbackQuery().getMessage());
-                Pattern pattern = Pattern.compile("text=(.*?)[\\n]+(.*?), entities");
+                Pattern pattern = Pattern.compile("text=(.*?)[\\n]+(.*?)[\\n]+(.*?)[\\n]+(.*?), entities");
                 Matcher matcher = pattern.matcher(nomi);
                 if (matcher.find()) {
                     String author = matcher.group(1).trim();  // Primo gruppo: autore
                     String songTitle = matcher.group(2).trim();
-                    String[] risposta = Adb.selectALL("Albums", "nome_artista", "nome_album", author, songTitle).split("____");
+                    String format = matcher.group(3).trim();
+                    String seller = matcher.group(4).trim();
+                    String[] risposta = Adb.selectALL("Albums", "nome_artista", "nome_album", "formato", "venditore", author, songTitle, format, seller).split("____");
                     System.out.println(songTitle);
                     if(risposta.length > 1)
                         Sendphoto(risposta[1], chat_id);
