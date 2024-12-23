@@ -38,15 +38,15 @@ public class AlbumDB {
         String createTableSQL = "CREATE TABLE IF NOT EXISTS Albums (" +
                 "nome_artista VARCHAR(255) NOT NULL, " +
                 "nome_album VARCHAR(255) NOT NULL, " +
-                "formato VARCHAR(255) NOT NULL, " +
+                "formato VARCHAR(20) NOT NULL, " +
                 "immagine VARCHAR(255) NOT NULL, " +
-                "venditore VARCHAR(255) NOT NULL, " +
+                "venditore VARCHAR(20) NOT NULL, " +
                 "prezzo_attuale VARCHAR(255) NOT NULL, " +
                 "prezzo_minimo VARCHAR(255) NOT NULL, " +
                 "data_minimo DATE, " +
                 "prezzo_massimo VARCHAR(255) NOT NULL, " +
                 "data_massimo DATE, " +
-                "PRIMARY KEY (nome_artista, nome_album)" +
+                "PRIMARY KEY (nome_artista, nome_album, formato, venditore)" +
                 ");";
 
         try (Statement stmt = conn.createStatement()) {
@@ -131,7 +131,7 @@ public class AlbumDB {
         return result;
     }
 
-    public String selectALL(String from, String where, String where2, String is, String is2) {
+    public String selectALL(String from, String where, String where2, String where3, String where4, String is, String is2, String is3, String is4) {
         String output = "";
         try {
             if (!conn.isValid(5)) {
@@ -140,12 +140,14 @@ public class AlbumDB {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        String query = "SELECT * FROM " + from+ " WHERE " + where + " = ?" + " AND " + where2 + " = ? ";
+        String query = "SELECT * FROM " + from+ " WHERE " + where + " = ?" + " AND " + where2 + " = ? " + " AND " + where3+ " = ? " + " AND " + where4 + " = ? ";
 
         try {
             PreparedStatement statement = conn.prepareStatement(query);
             statement.setString(1, is);
             statement.setString(2, is2);
+            statement.setString(3, is3);
+            statement.setString(4, is4);
             ResultSet rs = statement.executeQuery();
             while (rs.next()) {
                 // Estrai i dati dalle colonne del ResultSet

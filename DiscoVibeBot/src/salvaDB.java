@@ -39,9 +39,11 @@ public class salvaDB {
                 "Id_Utente BIGINT NOT NULL, " +
                 "nome_artista VARCHAR(255) NOT NULL, " +
                 "nome_album VARCHAR(255) NOT NULL, " +
-                "PRIMARY KEY (Id_Utente, nome_artista, nome_album), " +
+                "formato VARCHAR(20) NOT NULL, " +
+                "venditore VARCHAR(20) NOT NULL, " +
+                "PRIMARY KEY (Id_Utente, nome_artista, nome_album, formato, venditore), " +
                 "FOREIGN KEY (Id_Utente) REFERENCES Utenti (id), " +
-                "FOREIGN KEY (nome_artista, nome_album) REFERENCES Albums (nome_artista, nome_album));";
+                "FOREIGN KEY (nome_artista, nome_album, formato, venditore) REFERENCES Albums (nome_artista, nome_album, formato, venditore));";
 
         try (Statement stmt = conn.createStatement()) {
             stmt.executeUpdate(createTableSQL);
@@ -138,7 +140,7 @@ public class salvaDB {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        String query = "SELECT nome_artista, nome_album FROM " + from + " WHERE " + where + " = ?";
+        String query = "SELECT nome_artista, nome_album, formato, venditore FROM " + from + " WHERE " + where + " = ?";
 
         try {
             PreparedStatement statement = conn.prepareStatement(query);
@@ -231,12 +233,14 @@ public class salvaDB {
             e.printStackTrace();
             return false;
         }
-        String query = "INSERT INTO Salva (Id_Utente, nome_artista, nome_album) VALUES (?, ?, ?)";
+        String query = "INSERT INTO Salva (Id_Utente, nome_artista, nome_album, venditore, formato) VALUES (?, ?, ?, ?, ?)";
         try {
             PreparedStatement statement = conn.prepareStatement(query);
             statement.setLong(1, chat_id);
             statement.setString(2, album.getAutore());
             statement.setString(3, album.getTitolo());
+            statement.setString(4, album.getVenditore());
+            statement.setString(5, album.getFormato());
             statement.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
