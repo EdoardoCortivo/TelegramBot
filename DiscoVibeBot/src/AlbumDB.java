@@ -132,7 +132,7 @@ public class AlbumDB {
     }
 
     public String selectALL(String from, String where, String where2, String is, String is2) {
-        String result = "";
+        String output = "";
         try {
             if (!conn.isValid(5)) {
                 return null;
@@ -148,19 +148,29 @@ public class AlbumDB {
             statement.setString(2, is2);
             ResultSet rs = statement.executeQuery();
             while (rs.next()) {
-                for (int i = 1; i <= rs.getMetaData().getColumnCount(); i++) {
-                    result += rs.getString(i) + "____";
-                    //if the record is too short this if add a new tabulation
-                    if (rs.getString(i).length() < 8) result += "";
-                }
-                result += "69104";
+                // Estrai i dati dalle colonne del ResultSet
+                String nomeArtista = rs.getString("nome_artista");
+                String nomeAlbum = rs.getString("nome_album");
+                String formato = rs.getString("formato");
+                String immagine = rs.getString("immagine");
+                String venditore = rs.getString("venditore");
+                String prezzoAttuale = rs.getString("prezzo_attuale");
+                String prezzoMax = rs.getString("prezzo_massimo");
+                String prezzoMin = rs.getString("prezzo_minimo");
+                String DataMax = rs.getString("data_massimo");
+                String DataMin = rs.getString("data_minimo");
+
+                output = String.format(
+                        "Artista: %s\nAlbum: %s\nFormato: %s\nVenditore: %s\nPrezzo Attuale: %s\nPrezzo Massimo: %s\nPrezzo Minimo: %s\nData Massimo: %s\nData Minimo: %s",
+                        nomeArtista, nomeAlbum, formato, venditore, prezzoAttuale, prezzoMax, prezzoMin, DataMax, DataMin
+                );
+
+                output += "____" + immagine;
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
-
-        return result;
+        return output;
     }
     //------------------------------------------------------------------------------------------------------------------------------------------------------------------\\
 
