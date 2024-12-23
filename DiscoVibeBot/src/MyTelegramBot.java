@@ -8,8 +8,16 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.TelegramClient;
 
 import java.awt.*;
-import java.util.Arrays;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,8 +28,10 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import static java.lang.Math.toIntExact;
 
 public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
+
+    Map<String, String> imageLinks = new HashMap<>();
     Boolean Notiiche = true;
-    UtenteDB Udb = new UtenteDB("127.0.0.1", "3306", "root", "");
+    static UtenteDB Udb = new UtenteDB("127.0.0.1", "3306", "root", "");
     static AlbumDB Adb = new AlbumDB("127.0.0.1", "3306", "root", "");
     static salvaDB Sdb = new salvaDB("127.0.0.1", "3306", "root", "");
 
@@ -43,7 +53,14 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
                     Start(chat_id);
                     break;
                 case "/search":
-                    Search(Album[0].trim(), Album[1].trim(), chat_id);
+                    if (Album.length == 0 || (Album.length == 1 && Album[0].trim().isEmpty())) {
+                        SendMsg("Devi inserire il titolo e l'autore", chat_id);
+                    }
+                    try {
+                        Search(Album[0].trim(), Album[1].trim(), chat_id);
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
                     break;
                 case "/history":
                     History(chat_id);
@@ -62,31 +79,30 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
                     break;
             }
         } else if (update.hasCallbackQuery()) {
-            String call_data = update.getCallbackQuery().getData();
-            Album album = estraiAlbum(String.valueOf(update.getCallbackQuery().getMessage()));
+            String callbackData = update.getCallbackQuery().getData(); // Ottieni i dati della callback (ad esempio: "update_msg_text^<json_data>")
             long chat_id = update.getCallbackQuery().getMessage().getChatId();
-            if (call_data.equals("update_msg_text"))
+            if (callbackData.startsWith("u")) {
+                Album album = estraiAlbum(String.valueOf(update.getCallbackQuery().getMessage()), callbackData.substring(1));
+                String imageId = callbackData.substring(1);
+                album.setImmagine(imageLinks.get(imageId));
+                imageLinks.remove(imageId);
                 Save(chat_id, album);
-            else if (call_data.equals("history_msg_text")){
+            }
+            else if (callbackData.startsWith("h")) {
                 String nomi = String.valueOf(update.getCallbackQuery().getMessage());
                 Pattern pattern = Pattern.compile("text=(.*?)[\\n]+(.*?), entities");
                 Matcher matcher = pattern.matcher(nomi);
-
                 if (matcher.find()) {
                     String author = matcher.group(1).trim();  // Primo gruppo: autore
-                    String songTitle = matcher.group(2).trim();  // Secondo gruppo: titolo della canzone
-                    String[] fields = Adb.selectALL("Albums", "nome_artista", "nome_album", author, songTitle).split("____");
-                    String reply = "Autore: " + fields[0] +
-                            "\nTitolo: " + fields[1] +
-                            "\nFormato: " + fields[2] +
-                            "\nFornitore: " + fields[4] +
-                            "\nPrezzo attuale: " + fields[5] +
-                            "\nPrezzo minimo: " + fields[6] +
-                            "\nData prezzo minimo: " + fields[7] +
-                            "\nPrezzo massimo: " + fields[8] +
-                            "\nData prezzo massimo: " + fields[9];
-                    SendMsg(reply, chat_id);
+                    String songTitle = matcher.group(2).trim();
+                    String[] risposta = Adb.selectALL("Albums", "nome_artista", "nome_album", author, songTitle).split("____");
+                    System.out.println(songTitle);
+                    if(risposta.length > 1)
+                        Sendphoto(risposta[1], chat_id);
+                    SendMsg(risposta[0], chat_id);
                 }
+            } else {
+                System.out.println("Tipo di callback sconosciuto.");
             }
         }
     }
@@ -97,24 +113,33 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         SendMsg(Risposta, chat_id);
     }
 
-    public void Search(String titolo, String artista, long chat_id) {
-        List<Album> albums = new java.util.ArrayList<>(List.of());
-        albums.addAll(ScraperMondadori.ScraperM(titolo, artista));
-        albums.addAll(ScraperFeltrinelli.ScraperF(titolo, artista));
-        if(!albums.isEmpty()) {
-            for (Album album : albums) {
-                String Risposta = album.toString();
-                Sendphoto(album.getImmagine(), chat_id);
-                SendSearchResult(Risposta, chat_id);
+    public void Search(String titolo, String artista, long chat_id) throws Exception {
+        ExecutorService executorService = Executors.newFixedThreadPool(2);  // Due thread: uno per ciascun scraper
+        List<Future<List<Album>>> futures = new ArrayList<>();
+
+        futures.add(executorService.submit(() -> ScraperMondadori.ScraperM(titolo, artista)));
+        futures.add(executorService.submit(() -> ScraperFeltrinelli.ScraperF(titolo, artista)));
+        List<Album> albums = new ArrayList<>();
+        for (Future<List<Album>> future : futures) {
+            try {
+                albums.addAll(future.get());
+            } catch (InterruptedException | ExecutionException e) {
+                e.printStackTrace();
             }
         }
-        else
-        {
+        executorService.shutdown();
+        if (!albums.isEmpty()) {
+            for (Album album : albums) {
+                Sendphoto(album.getImmagine(), chat_id);
+                SendSearchResult(album, chat_id);
+            }
+        } else {
             SendMsg("Non ho trovato nulla. 😓\n" +
                     "Sei sicuro di aver scritto giusto? 😟\n" +
                     "Tips: Prova a scrivere come solo le parti che sai che sono giuste", chat_id);
         }
     }
+
 
     public void Save(long chat_id, Album album) {
         String Risposta = "Album aggiunto correttamente al database \uD83D\uDE01";
@@ -126,6 +151,7 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
     public void History(long chat_id) {
         String[] nomi = Sdb.select("Salva", "Id_Utente", chat_id).split("69104"); //mi serviva un qualcosa per fare lo split.
         for (int i = 0; i < nomi.length; i++) {
+            System.out.println(nomi[i]);
             HistoryResult(nomi[i].replace("____", "\n"), chat_id);
         }
     }
@@ -177,18 +203,22 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         }
     }
 
-    public void SendSearchResult(String Risposta, long chat_id) {
+    public void SendSearchResult(Album album, long chat_id) throws Exception {
+        String imageUrl = album.getImmagine();
+        String imageId = "image_" + UUID.randomUUID().toString();
+        imageLinks.put(imageId, imageUrl);
+        String callback = "u" + imageId;
         SendMessage message = SendMessage // Create a message object
                 .builder()
                 .chatId(chat_id)
-                .text(Risposta)
+                .text(album.toString())
                 .replyMarkup(InlineKeyboardMarkup
                         .builder()
                         .keyboardRow(
                                 new InlineKeyboardRow(InlineKeyboardButton
                                         .builder()
                                         .text("Voglio seguire questo!")
-                                        .callbackData("update_msg_text")
+                                        .callbackData(callback)
                                         .build()
                                 )
                         )
@@ -203,6 +233,13 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
     }
 
     public void HistoryResult(String Risposta, long chat_id) {
+        String callback;
+
+        if (URLEncoder.encode(Risposta, StandardCharsets.UTF_8).length() > 64) {
+            callback = URLEncoder.encode(Risposta, StandardCharsets.UTF_8).substring(0, 63);
+        } else {
+            callback = URLEncoder.encode(Risposta, StandardCharsets.UTF_8);
+        }
         SendMessage message = SendMessage // Create a message object
                 .builder()
                 .chatId(chat_id)
@@ -212,8 +249,8 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
                         .keyboardRow(
                                 new InlineKeyboardRow(InlineKeyboardButton
                                         .builder()
-                                        .text("Questo!")
-                                        .callbackData("history_msg_text")
+                                        .text("Mostrami la storia di questo")
+                                        .callbackData("h" + callback)
                                         .build()
                                 )
                         )
@@ -235,33 +272,6 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
             System.out.println("Il programma ha cercato di inviare una foto, ma non c'è riuscito.");
             e.printStackTrace();
         }
-    }
-
-    public static Album estraiAlbum(String Album) {
-        String fornitore = "";
-        Pattern fornitorePattern = Pattern.compile("Fornitore (.*?):");
-        Matcher matcher = fornitorePattern.matcher(Album);
-        if (matcher.find()) {
-            fornitore = matcher.group(1);
-        }
-
-        // Estrazione dei dati dell'album
-        String titolo = extractData(Album, "🎵 Album: (.*?)\n");
-        String autore = extractData(Album, "🧑‍🎤 Artista: (.*?)\n");
-        String formato = extractData(Album, "💿 Formato: (.*?)\n");
-        String prezzo = extractData(Album, "💰 Prezzo: (.*?), ");
-
-        return new Album(prezzo, autore, titolo, formato, "", fornitore);
-    }
-
-    // Metodo per estrarre i dati generali come titolo, autore, formato e prezzo
-    private static String extractData(String Album, String regex) {
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(Album);
-        if (matcher.find()) {
-            return matcher.group(1);
-        }
-        return "";
     }
 
     public static void Save(Album album) {
@@ -304,4 +314,32 @@ public class MyTelegramBot implements LongPollingSingleThreadUpdateConsumer {
         for (String chat_id : id)
             obj.SendMsg(risposta, Long.parseLong(chat_id));
     }
+
+    public static Album estraiAlbum(String Album, String immagine) {
+        String fornitore = "";
+        Pattern fornitorePattern = Pattern.compile("Fornitore (.*?):");
+        Matcher matcher = fornitorePattern.matcher(Album);
+        if (matcher.find()) {
+            fornitore = matcher.group(1);
+        }
+
+        // Estrazione dei dati dell'album
+        String titolo = extractData(Album, "🎵 Album: (.*?)\n");
+        String autore = extractData(Album, "🧑‍🎤 Artista: (.*?)\n");
+        String formato = extractData(Album, "💿 Formato: (.*?)\n");
+        String prezzo = extractData(Album, "💰 Prezzo: (.*?), ");
+
+        return new Album(prezzo, autore, titolo, formato, immagine, fornitore);
+    }
+
+    // Metodo per estrarre i dati generali come titolo, autore, formato e prezzo
+    private static String extractData(String Album, String regex) {
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(Album);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return "";
+    }
+
 }

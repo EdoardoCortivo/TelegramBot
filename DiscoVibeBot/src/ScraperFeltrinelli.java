@@ -45,7 +45,7 @@ public class ScraperFeltrinelli {
                 String titolo = "";
                 String artista = "";
                 String formato = "";
-                String prezzo = driver.findElement(By.xpath("(//div[@class='cc-product-list-item'])[1]")).getAttribute("data-tracking-price") + " €";
+                String prezzo = element.findElement(By.xpath(".//div[@class='cc-content-price']//span[@class='cc-price']")).getText();
 
                 if (lines.length >= 1) titolo = lines[0];
                 if (lines.length >= 2) artista = lines[1].replace("di ", "");

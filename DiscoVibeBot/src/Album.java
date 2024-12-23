@@ -1,3 +1,8 @@
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 public class Album {
     private String autore;
     private String titolo;
@@ -71,5 +76,34 @@ public class Album {
                 "💿 Formato: " + formato + "\n" +
                 "💰 Prezzo: " + prezzo + "\n" +
                 "";
+    }
+
+    public String stringa() {
+        return Immagine;
+    }
+
+    public static Album fromString(String s) {
+        // Rimuoviamo "Album{" e "}"
+        s = s.replace("Album{", "").replace("}", "");
+
+        // Separiamo la stringa usando il carattere '\''
+        String[] parts = s.split("'");
+
+        if (parts.length != 12) {
+            throw new IllegalArgumentException("La stringa non è nel formato corretto.");
+        }
+
+        // Creiamo e restituiamo un nuovo oggetto Album
+        return new Album(
+                parts[0],  // autore
+                parts[1],  // titolo
+                parts[2],  // formato
+                parts[3],  // prezzo
+                parts[4],  // Immagine
+                parts[5]   // Venditore
+        );
+    }
+
+    public Album() {
     }
 }
